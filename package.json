@@ -14,6 +14,14 @@
     "cordis"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/miaoxintechnology/dsh-workbuddy-files#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miaoxintechnology/dsh-workbuddy-files.git"
+  },
+  "bugs": {
+    "url": "https://github.com/miaoxintechnology/dsh-workbuddy-files/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
