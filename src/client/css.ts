@@ -25,8 +25,11 @@ export const CSS = [
   '/* ---- 引用气泡换肤：主题色圆角矩形（原子删除由输入机原生保证） ---- */',
   '/* 关键：padding 用等量负 margin 抵消、描边用 box-shadow（不占布局）—— */',
   '/* 气泡外部宽度与 textarea 字符宽度完全一致，backdrop 与光标严格对齐 */',
-  '[data-decoration="chip"]{padding:0 8px !important;margin:0 -8px !important;border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4c9aff) 14%,transparent) !important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-brand-primary,#4c9aff) 45%,transparent);color:var(--dsw-alias-brand-primary,#4c9aff) !important;font-weight:500}',
+  '[data-decoration="chip"]{padding:0 8px !important;margin:0 -8px !important;border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4c9aff) 14%,transparent) !important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-brand-primary,#4c9aff) 45%,transparent);color:var(--dsw-alias-brand-primary,#4c9aff) !important;font-weight:inherit}',
+  /* 隐藏 chip 内的类型图标（16px，比 textarea 对应字符宽约 1 个字符 → 右偏移元凶） */
+  '[data-decoration="chip"] svg{display:none !important}',
+  /* @ 徽标保持默认字号（缩小会引入反向偏移） */
+  '[data-decoration="chip"] [class*="chipTriggerGlyph"]{font-size:inherit !important;opacity:.8}',
   '[data-decoration="chip"]:hover{background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4c9aff) 22%,transparent) !important}',
   '[data-decoration="chip"][data-invalid="true"]{color:var(--dsw-alias-state-error-primary,#e56a64) !important;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e56a64) 14%,transparent) !important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-state-error-primary,#e56a64) 45%,transparent) !important}',
-  '[data-decoration="chip"] [class*="chipTriggerGlyph"]{font-size:12px;opacity:.8}',
 ].join('\n')
