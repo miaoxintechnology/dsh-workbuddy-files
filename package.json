@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbuddy-files",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "WorkBuddy 风格的 DeepSeek Harness Web 插件：拖拽/粘贴文件与文件夹生成输入框引用气泡（附绝对路径）、@ 菜单检索缓存文件、对话区文件卡片、read_document 工具。",
   "keywords": [
     "dsh",
