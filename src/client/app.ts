@@ -35,7 +35,18 @@ export function makeFactory() {
     return {
       name: 'workbuddy-files',
       apply(ctx) {
-        const get = (name: string) => (ctx.get as (n: string) => unknown)(name)
+        try {
+          applyClient(ctx, React)
+        } catch (err) {
+          console.error('[workbuddy-files] client apply 异常:', err)
+        }
+      },
+    }
+  }
+}
+
+function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
+  const get = (name: string) => (ctx.get as (n: string) => unknown)(name)
 
         // ---- 能力探测（缺失则优雅退出）----
         const sessions = get('sessions') as never
@@ -54,9 +65,25 @@ export function makeFactory() {
         if (slots === undefined) return
 
         // ---- 包内样式 ----
-        const insertStyles = () => (styles !== undefined ? styles.insert(CSS) : () => {})
+        // 正式插件包没有动态版的 styles 内置服务：回退到 document.head style 注入（dsh-pet 同款）
+        const injectCssViaHead = (css: string): void => {
+          if (typeof document === 'undefined') return
+          const tagId = 'dsh-workbuddy-files/styles'
+          if (document.querySelector('style[data-plugin-css="' + tagId + '"]') !== null) return
+          const tag = document.createElement('style')
+          tag.dataset.plugin = 'dsh-workbuddy-files'
+          tag.dataset.pluginCss = tagId
+          tag.textContent = css
+          document.head.appendChild(tag)
+        }
+        const insertStyles = () => {
+          if (styles !== undefined) return styles.insert(CSS)
+          injectCssViaHead(CSS)
+          return () => {}
+        }
         const effect = (ctx.effect as (fn: () => (() => void) | undefined, label?: string) => void).bind(ctx)
         effect(insertStyles, 'workbuddy: styles')
+        console.log('[workbuddy-files] client apply 开始：services slots=' + (slots !== undefined) + ' conversation=' + (conversation !== undefined) + ' inputTriggers=' + (inputTriggers !== undefined) + ' conversationEvents=' + (conversationEvents !== undefined) + ' styles=' + (styles !== undefined))
 
         // ---- 共享实例 ----
         const bus = createDropBus()
@@ -89,7 +116,11 @@ export function makeFactory() {
 
         // ---- 拖拽 / 粘贴处理 + 窗口级监听 ----
         const handlers = createDropHandlers({ bus, insert, ensureRoot, enqueueUpload })
-        effect(() => handlers.installListeners(), 'workbuddy: window listeners')
+        effect(() => {
+          const off = handlers.installListeners()
+          console.log('[workbuddy-files] 窗口拖拽/粘贴监听已注册')
+          return off
+        }, 'workbuddy: window listeners')
 
         // ---- @ 触发源（文件缓存分组）----
         if (inputTriggers !== undefined) {
@@ -124,7 +155,4 @@ export function makeFactory() {
         ))
 
         console.log('[workbuddy-files] client 就绪：拖入即插气泡 + 后台缓存 / 统一遮罩 / 文件卡片')
-      },
-    }
-  }
 }
