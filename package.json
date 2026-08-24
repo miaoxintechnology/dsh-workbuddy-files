@@ -42,8 +42,8 @@
     "README.md"
   ],
   "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch",
+    "bundle": "tsdown --config tsdown.host.config.ts && tsdown --config tsdown.client.config.ts && node scripts/rename.mjs",
+    "watch": "tsdown --config tsdown.client.config.ts --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run typecheck && npm run bundle"
   },
