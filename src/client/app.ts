@@ -24,7 +24,8 @@ import type { UploadJob } from './types'
 /** 工厂返回的 Cordis 客户端插件 */
 export interface ClientPlugin {
   apply(ctx: Record<string, unknown>): void
-  inject?: string[]
+  /** 硬依赖：Cordis 会等这些服务就绪后再 apply（缺失即无限等待，不会静默跳过） */
+  inject: string[]
   name?: string
 }
 
@@ -34,6 +35,8 @@ export function makeFactory() {
 
     return {
       name: 'workbuddy-files',
+      // slots：UI 注册入口；sessions + conversation：气泡插入管线核心
+      inject: ['slots', 'sessions', 'conversation'],
       apply(ctx) {
         try {
           applyClient(ctx, React)
@@ -46,6 +49,7 @@ export function makeFactory() {
 }
 
 function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
+  console.log('[workbuddy-files] client apply 开始')
   const get = (name: string) => (ctx.get as (n: string) => unknown)(name)
 
         // ---- 能力探测（缺失则优雅退出）----
