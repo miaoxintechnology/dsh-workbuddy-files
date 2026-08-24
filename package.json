@@ -44,7 +44,11 @@
   "scripts": {
     "bundle": "tsdown",
     "watch": "tsdown --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run bundle"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "_comment": [
     "main (lib/index.js) 是 Host 半侧入口（Cordis 插件 apply/inject）",
