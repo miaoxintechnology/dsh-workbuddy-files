@@ -1,0 +1,24 @@
+# ============================================================================
+# dsh-workbuddy-files 的 bundle patch —— 把插件挂进 DSH 配置树
+# ============================================================================
+#
+# 【这是什么】本文件是 dsh-workbuddy-files 的“挂载声明”。DSH 启动时按 bundle
+#   层栈把各个插件的 patch 叠加起来组成配置树。
+# 【工作原理】
+#   - insert：往配置树里添加新的插件行（entry）
+#   - 每个 entry 有 id（行标识，patch 覆盖时按它定位）和 name（插件模块）
+#   - name: 'dsh-workbuddy-files' 会解析包入口 lib/index.js（Host 半侧）
+#   - 因为 package.json 声明了 dsh.client，DSH 的模块系统同时会把本包扫描为
+#     “浏览器插件”，提供 /plugins/dsh-workbuddy-files/client.js 给页面
+# 【config 说明】这里写的 config 会传给 host 半侧的 apply(ctx, config)。
+#   （浏览器半侧目前收不到这些配置，client 里的参数走代码默认值）
+# ============================================================================
+
+- insert:
+    - id: workbuddy-files          # 插件行 id（唯一）
+      name: 'dsh-workbuddy-files'  # 模块名：解析到 lib/index.js
+      config:
+        # 拖拽/粘贴文件的落地目录（默认 ~/.dsh-drops；支持 ~ 前缀）
+        dropsDir: '~/.dsh-drops'
+        # 单文件大小上限（字节，默认 31MB —— host.call JSON 通道的保守上限）
+        maxFileBytes: 32505856

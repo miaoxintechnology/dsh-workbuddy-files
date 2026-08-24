@@ -1,0 +1,76 @@
+{
+  "name": "dsh-workbuddy-files",
+  "version": "0.1.0",
+  "description": "WorkBuddy 风格的 DeepSeek Harness Web 插件：拖拽/粘贴文件与文件夹生成输入框引用气泡（附绝对路径）、@ 菜单检索缓存文件、对话区文件卡片、read_document 工具。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "workbuddy",
+    "drag-drop",
+    "file-reference",
+    "file-pill",
+    "web-ui",
+    "cordis"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "_comment": [
+    "main (lib/index.js) 是 Host 半侧入口（Cordis 插件 apply/inject）",
+    "exports['./client'] 是浏览器半侧入口，DSH 模块系统据此提供 /plugins/dsh-workbuddy-files/client.js",
+    "dsh.bundle.patch 声明本包是 bundle：dsh plugin add 后自动加入 profile 的 bundles 层栈并挂载 host 半侧",
+    "dsh.client 声明浏览器半侧的注入依赖与平台（web）",
+    "peerDependencies 是宿主（DSH）提供的模块，本包不打包它们"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-input-trigger": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-fs": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-shell": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-tools": "^0.1.1-rc.1",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^18.2.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.5.0"
+  }
+}
