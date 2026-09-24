@@ -133,10 +133,44 @@ dsh web              # 重启 web 界面
 
 `dsh plugin add` 会：在 `$DSH_HOME/profiles/web` 里 `pnpm add` 该包，并因为本包声明了 `dsh.bundle.patch`，自动把 `dsh-workbuddy-files` 追加进 profile 的 `dsh.profile.bundles` 层栈（可在 `~/.dsh/profiles/web/package.json` 中核对）。卸载：`dsh plugin --profile web remove dsh-workbuddy-files`。
 
-### 方式二：npm 发布后安装
+### 方式二：npm registry 安装（在其他设备上安装，推荐）
+
+前置：目标设备已安装 DSH 与 pnpm。
 
 ```powershell
+npm i -g pnpm               # 若尚未安装
+# DSH 未安装时：npm i -g @deepseek-ai/dsh
+
 dsh plugin --profile web add dsh-workbuddy-files
+dsh web                     # 重启 web 界面，刷新页面即生效
+```
+
+### 方式三：GitHub 直装（npm registry 不可达时）
+
+仓库自带 `lib/` 构建产物（clone 即可用，无需构建）：
+
+```powershell
+dsh plugin --profile web add "github:miaoxintechnology/dsh-workbuddy-files"
+dsh web
+```
+
+### 方式四：离线拷贝
+
+把整个项目目录拷到目标设备，然后：
+
+```powershell
+dsh plugin --profile web add file:<项目目录绝对路径>
+dsh web
+```
+
+### 更新与卸载
+
+```powershell
+# 更新到指定版本（显式版本号可绕过 pnpm 的「新版本最小发布年龄」供应链门禁）
+dsh plugin --profile web add dsh-workbuddy-files@0.1.5
+
+# 卸载
+dsh plugin --profile web remove dsh-workbuddy-files
 ```
 
 ### 配置（可选）
