@@ -1,0 +1,39 @@
+# 通过 npm Trusted Publishing（OIDC）发布：无需 token、无需 2FA 验证码
+# 前置（一次性，在 npm 网站配置）：
+#   包页面 → Settings → Trusted Publisher → GitHub Actions
+#   Organization or user: miaoxintechnology
+#   Repository:            dsh-workbuddy-files
+#   Workflow filename:     publish.yml
+#   Environment:           （留空）
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Trusted Publishing + provenance 必需
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing 需要 npm >= 11.5.1
+      - name: 升级 npm
+        run: npm install -g npm@latest
+
+      - name: 安装依赖
+        run: npm install --no-audit --no-fund
+
+      # prepublishOnly 会自动跑 typecheck + bundle，保证发布产物与源码一致
+      - name: 发布到 npm
+        run: npm publish --provenance --access public
