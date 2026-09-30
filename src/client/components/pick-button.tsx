@@ -7,11 +7,23 @@ import type { ReactLike } from './overlay'
  * 📎 引用按钮（挂在 conversation.input.left 列表槽）：
  * 统一走 <input type=file>（多选 / webkitdirectory）→ 立即插入气泡 →
  * 后台缓存（所有浏览器行为一致）。
+ *
+ * 该槽位是 session 作用域，标准属性里的 `sessionId` 是 0.2.0 获取当前会话的
+ * 官方途径（sessions 服务已不再暴露列表快照），在此上报给插件共享状态。
  */
-export function createPickButtonComponent(React: ReactLike, bus: DropBus, handlers: Pick<DropHandlers, 'acceptTree'>) {
-  return function PickButton() {
+export function createPickButtonComponent(
+  React: ReactLike,
+  bus: DropBus,
+  handlers: Pick<DropHandlers, 'acceptTree'>,
+  onSession: (sessionId: string | undefined) => void,
+) {
+  return function PickButton(props: { sessionId?: string }) {
     const [open, setOpen] = React.useState(false)
     const newBatch = () => 'drop-' + Date.now().toString(36)
+
+    React.useEffect(() => {
+      onSession(props.sessionId)
+    }, [props.sessionId])
 
     const pickFolder = async () => {
       setOpen(false)

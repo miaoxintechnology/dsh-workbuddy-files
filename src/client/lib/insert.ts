@@ -13,15 +13,12 @@ import type { InsertItem } from '../types'
  * 兜底 2：无 facade → 聚焦 textarea 时 document.execCommand 纯文本插入。
  */
 export interface InsertDeps {
-  sessions: {
-    list: { getSnapshot(): { current: string | undefined } }
-  }
+  /**
+   * 会话输入 shell 注册表（0.2.0：ctx.conversation.input，服务键与 0.1.x 相同）。
+   */
   conversation: {
     input: {
-      /**
-       * id 寻址服务面（InputHub.shell）—— 直接返回会话输入 shell，
-       * 无需 sessions.scope()（后者返回 cordis Context，动态门面拒绝暴露）。
-       */
+      /** id 寻址服务面 InputHub.shell(sessionId) —— 直接返回会话输入 shell */
       shell(id: string): {
         state: { getSnapshot(): { draft: string; draftRev: number } }
         insertReference(reference: InsertItem['reference'], span: { start: number; end: number; draftRev: number }): boolean
@@ -30,6 +27,11 @@ export interface InsertDeps {
       }
     }
   }
+  /**
+   * 当前会话 id。0.2.0 的 sessions 服务不再暴露列表快照，
+   * 由 conversation.input.left 插槽的 sessionId 标准属性捕获。
+   */
+  currentSessionId(): string | undefined
   toast(text: string, level?: 'info' | 'error'): void
 }
 
@@ -47,7 +49,7 @@ function readCaret(fallbackLen: number): number {
 
 export function createInsertPipeline(deps: InsertDeps): InsertPipeline {
   return async function insertItems(items: InsertItem[]): Promise<number> {
-    const sessionId = deps.sessions.list.getSnapshot().current
+    const sessionId = deps.currentSessionId()
     if (sessionId === undefined) {
       deps.toast('请先打开或新建一个会话，再拖入文件', 'error')
       return 0

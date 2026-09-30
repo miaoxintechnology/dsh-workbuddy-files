@@ -3,10 +3,11 @@ import { dropsStat } from '../lib/transfer'
 import type { ReactLike } from './overlay'
 
 /**
- * 对话区文件卡片（挂在 conversation.chat.turnTail 链式槽）：
- * 用户消息发送后，该轮次消息中引用的文件以「类型图标 + 文件名 + 大小/文件夹」卡片
- * 渲染在轮次尾部；点击卡片经 owner 的 openFile 打开文件。
- * selector 只匹配含文件引用的轮次（见 definitions.ts），不抢占其他链条目。
+ * 对话区文件卡片（挂在 conversation.chat.turnTail —— 0.2.0 起是 **list 槽**）：
+ * 每个完成的轮次都会渲染本条目，从 ownerProps.turn 的轮次位置数据里读
+ * `workbuddy-file-refs`（由 definitions.ts 注册的会话定义聚合自用户消息），
+ * 有引用时渲染「类型图标 + 文件名 + 大小/文件夹」卡片，无引用返回 null。
+ * 点击卡片经 owner 的 openFile 打开文件。
  */
 export function createFileCardsComponent(React: ReactLike) {
   function FileCard(props: { path: string; openFile?: (path: string) => void }) {
@@ -36,12 +37,24 @@ export function createFileCardsComponent(React: ReactLike) {
     )
   }
 
-  return function FileCards(props: { matched: { refs: string[] }; openFile?: (path: string) => void }) {
-    const matched = props.matched
-    if (matched === null || matched === undefined || !Array.isArray(matched.refs) || matched.refs.length === 0) return null
+  interface TurnTailProps {
+    /** 0.2.0 的 turnTail list ownerProps：完成的轮次位置 */
+    turn?: { data: { get(key: string): { refs?: string[] } | undefined } }
+    seq?: number
+    openFile?: (path: string) => void
+  }
+
+  return function FileCards(props: TurnTailProps) {
+    // 0.2.0：turnTail 是 list 条目，ownerProps 直接给出 { turn, seq, openFile }
+    const turn = props.turn
+    const data = turn !== undefined && turn !== null && turn.data !== undefined && typeof turn.data.get === 'function'
+      ? turn.data.get('workbuddy-file-refs')
+      : undefined
+    const refs = data !== undefined && data !== null && Array.isArray(data.refs) ? data.refs : []
+    if (refs.length === 0) return null
     return React.createElement('div', { className: 'wbd-cards' },
       React.createElement('span', { className: 'wbd-cards-label' }, '📎 消息引用的文件'),
-      matched.refs.map((path, i) => React.createElement(FileCard, { key: String(path) + ':' + i, path, openFile: props.openFile })),
+      refs.map((path: string, i: number) => React.createElement(FileCard, { key: String(path) + ':' + i, path, openFile: props.openFile })),
     )
   }
 }

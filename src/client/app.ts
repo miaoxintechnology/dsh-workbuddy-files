@@ -14,7 +14,7 @@ import { createFileCardsComponent } from './components/file-cards'
 import { createOverlayComponent, ReactLike } from './components/overlay'
 import { createPickButtonComponent } from './components/pick-button'
 import { CSS } from './css'
-import { boundaryDef, fileRefsDef, selectTurnFileRefs } from './definitions'
+import { boundaryDef, fileRefsDef } from './definitions'
 import { createDropBus } from './lib/bus'
 import { createDropHandlers } from './lib/drop'
 import { createInsertPipeline } from './lib/insert'
@@ -35,8 +35,8 @@ export function makeFactory() {
 
     return {
       name: 'workbuddy-files',
-      // slots：UI 注册入口；sessions + conversation：气泡插入管线核心
-      inject: ['slots', 'sessions', 'conversation'],
+      // 0.2.0：slots / conversation / uiConversation（会话定义注册）/ inputTriggers
+      inject: ['slots', 'conversation', 'uiConversation', 'inputTriggers'],
       apply(ctx) {
         try {
           applyClient(ctx, React)
@@ -53,7 +53,6 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
   const get = (name: string) => (ctx.get as (n: string) => unknown)(name)
 
         // ---- 能力探测（缺失则优雅退出）----
-        const sessions = get('sessions') as never
         const slots = get('slots') as {
           inject(key: string, callback: () => unknown): () => void
           register(options: Record<string, unknown>, component: unknown): unknown
@@ -62,11 +61,18 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
         const inputTriggers = get('inputTriggers') as {
           registerSource(source: unknown): () => void
         } | undefined
-        const conversationEvents = get('conversationEvents') as {
-          register(definition: unknown): (() => void) | undefined
+        // 0.2.0：conversationEvents 服务改名为 uiConversation（定义注册在 .events 上）
+        const uiConversation = get('uiConversation') as {
+          events?: { register(definition: unknown): (() => void) | undefined }
         } | undefined
         const styles = get('styles') as { insert(css: string): () => void } | undefined
         if (slots === undefined) return
+
+        // ---- 当前会话 id ----
+        // 0.2.0 的 sessions 服务不再暴露 list；会话 id 由 session 作用域的插槽标准属性提供
+        let currentSessionId: string | undefined
+        const setSessionId = (id: string | undefined): void => { currentSessionId = id }
+        const getSessionId = (): string | undefined => currentSessionId
 
         // ---- 包内样式 ----
         // 正式插件包没有动态版的 styles 内置服务：回退到 document.head style 注入（dsh-pet 同款）
@@ -87,7 +93,7 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
         }
         const effect = (ctx.effect as (fn: () => (() => void) | undefined, label?: string) => void).bind(ctx)
         effect(insertStyles, 'workbuddy: styles')
-        console.log('[workbuddy-files] client apply 开始：services slots=' + (slots !== undefined) + ' conversation=' + (conversation !== undefined) + ' inputTriggers=' + (inputTriggers !== undefined) + ' conversationEvents=' + (conversationEvents !== undefined) + ' styles=' + (styles !== undefined))
+        console.log('[workbuddy-files] client apply 开始：services slots=' + (slots !== undefined) + ' conversation=' + (conversation !== undefined) + ' inputTriggers=' + (inputTriggers !== undefined) + ' uiConversation=' + (uiConversation !== undefined) + ' styles=' + (styles !== undefined))
 
         // ---- 共享实例 ----
         const bus = createDropBus()
@@ -116,7 +122,7 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
         }
 
         // ---- 气泡注入管线 ----
-        const insert = createInsertPipeline({ sessions, conversation, toast: bus.toast })
+        const insert = createInsertPipeline({ conversation, currentSessionId: getSessionId, toast: bus.toast })
 
         // ---- 拖拽 / 粘贴处理 + 窗口级监听 ----
         const handlers = createDropHandlers({ bus, insert, ensureRoot, enqueueUpload })
@@ -132,11 +138,12 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
           effect(() => inputTriggers.registerSource(source), 'workbuddy: @ source')
         }
 
-        // ---- 会话事件定义 ----
-        if (conversationEvents !== undefined) {
+        // ---- 会话事件定义（0.2.0：注册在 uiConversation.events 上）----
+        const events = uiConversation !== undefined ? uiConversation.events : undefined
+        if (events !== undefined) {
           effect(() => {
-            const d1 = conversationEvents.register(boundaryDef)
-            const d2 = conversationEvents.register(fileRefsDef)
+            const d1 = events.register(boundaryDef)
+            const d2 = events.register(fileRefsDef)
             return () => {
               if (typeof d1 === 'function') d1()
               if (typeof d2 === 'function') d2()
@@ -149,12 +156,14 @@ function applyClient(ctx: Record<string, unknown>, React: ReactLike): void {
           { name: 'shell.overlay', id: 'workbuddy-drop', order: 300, label: 'WorkBuddy 拖拽遮罩' },
           createOverlayComponent(React, bus),
         ))
+        // conversation.input.left：session 作用域，标准属性含 sessionId —— 在此捕获当前会话
         slots.inject('conversation.input.left', () => slots.register(
           { name: 'conversation.input.left', id: 'workbuddy-pick', order: 0, label: '引用文件/文件夹' },
-          createPickButtonComponent(React, bus, handlers),
+          createPickButtonComponent(React, bus, handlers, setSessionId),
         ))
+        // 0.2.0：turnTail 从 chain 变为 list —— 用 id 注册，组件直接拿到 { turn, seq, openFile }
         slots.inject('conversation.chat.turnTail', () => slots.register(
-          { name: 'conversation.chat.turnTail', select: selectTurnFileRefs },
+          { name: 'conversation.chat.turnTail', id: 'dsh-workbuddy-files', order: 20, label: '文件引用卡片' },
           createFileCardsComponent(React),
         ))
 
