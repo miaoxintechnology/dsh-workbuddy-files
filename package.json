@@ -71,8 +71,7 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.4",
-    "react": "^18.2.0"
+    "@deepseek-ai/cordis": "^4.0.4"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
